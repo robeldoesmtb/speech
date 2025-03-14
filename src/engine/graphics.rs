@@ -31,6 +31,10 @@ pub struct Texture {
     pub sampler: wgpu::Sampler,
     pub width: u32,
     pub height: u32,
+    pub frame_width: u32,
+    pub frame_height: u32,
+    pub frames_per_row: u32,
+    pub total_frames: u32,
 }
 
 impl Texture {
@@ -40,6 +44,9 @@ impl Texture {
         queue: &wgpu::Queue,
         bytes: &[u8],
         label: &str,
+        frame_width: Option<u32>,
+        frame_height: Option<u32>,
+        total_frames: Option<u32>,
     ) -> Result<Self, String> {
         // Load the image
         let img = match image::load_from_memory(bytes) {
@@ -55,6 +62,16 @@ impl Texture {
             height: dimensions.1,
             depth_or_array_layers: 1,
         };
+
+        // frame info
+
+        let frame_width = frame_width.unwrap_or(dimensions.0);
+        let frame_height = frame_height.unwrap_or(dimensions.1);
+        let frames_per_row = dimensions.0 / frame_width;
+        let total_frames = total_frames.unwrap_or(
+            (dimensions.0 / frame_width) * (dimensions.1 / frame_height)
+        );
+
         let texture = device.create_texture(
             &wgpu::TextureDescriptor {
                 label: Some(label),
@@ -103,6 +120,10 @@ impl Texture {
             sampler,
             width: dimensions.0,
             height: dimensions.1,
+            frame_width,
+            frame_height,
+            frames_per_row,
+            total_frames,
         })
     }
 }
@@ -136,7 +157,7 @@ impl Vertex {
     }
 }
 
-// Our enhanced renderer
+// Our rendering manager
 pub struct Renderer {
     render_pipeline: wgpu::RenderPipeline,
     textures: HashMap<String, Texture>,

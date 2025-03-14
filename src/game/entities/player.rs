@@ -1,4 +1,3 @@
-// src/game/entities/player.rs
 use crate::game::level::{Level, TileType, Perspective};
 
 
